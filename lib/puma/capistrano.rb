@@ -1,7 +1,7 @@
 Capistrano::Configuration.instance.load do
-  after 'deploy:stop', 'puma:stop'
-  after 'deploy:start', 'puma:start'
-  after 'deploy:restart', 'puma:restart'
+#  after 'deploy:stop', 'puma:stop'
+#  after 'deploy:start', 'puma:start'
+#  after 'deploy:restart', 'puma:restart'
 
   # Ensure the tmp/sockets directory is created by the deploy:setup task and
   # symlinked in by the deploy:update task. This is not handled by Capistrano
@@ -28,6 +28,22 @@ Capistrano::Configuration.instance.load do
     desc 'Restart puma'
     task :restart, :roles => lambda { fetch(:puma_role) }, :on_no_matching_servers => :continue do
       run "cd #{current_path} && #{fetch(:pumactl_cmd)} -S #{fetch(:puma_state)} restart"
+    end
+
+    # Namespace for upstart tasks
+    namespace :upstart do
+      desc 'Start puma'
+      task :start, :roles => lambda { fetch(:puma_role) }, :on_no_matching_servers => :continue do
+        run "#{sudo} start puma app=#{current_path} user=#{user}"
+      end
+      desc 'Stop puma'
+      task :stop, :roles => lambda { fetch(:puma_role) }, :on_no_matching_servers => :continue do
+        run "#{sudo} stop puma app=#{current_path} user=#{user}"
+      end
+      desc 'Restart puma'
+      task :restart, :roles => lambda { fetch(:puma_role) }, :on_no_matching_servers => :continue do
+        run "#{sudo} restart puma app=#{current_path} user=#{user}"
+      end
     end
   end
 end
